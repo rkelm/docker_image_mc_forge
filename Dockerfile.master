@@ -1,0 +1,38 @@
+FROM rkelm/vanilla_minecraft_jdk8_2:SED_REPLACE_TAG_APP_VERSION
+
+ARG APP_VERSION
+ARG LAUNCHER_VERSION
+ARG LAUNCHER_INSTALLER_JAR
+
+ENV APP_VERSION $APP_VERSION
+ENV APP_NAME Forge Minecraft
+ENV JAR_FILE forge-${APP_VERSION}-${LAUNCHER_VERSION}.jar
+ENV JAR_FILE_VANILLA minecraft_server.${APP_VERSION}.jar
+ENV MODS_JAR_DIR $INSTALL_DIR/mods_jar
+
+# Create Directory for mod jar files.
+RUN mkdir -p ${MODS_JAR_DIR}
+
+ADD rootfs /
+
+ADD ${LAUNCHER_INSTALLER_JAR} ${APP_DIR}
+RUN cd ${APP_DIR} && java -jar ${APP_DIR}/${LAUNCHER_INSTALLER_JAR} --installServer 
+
+RUN echo -e ' ************************************************** \n' \
+  "Docker Image to run app ${APP_NAME} ${APP_VERSION}. \n" \
+  '\n' \
+  'Usage: \n' \
+  "   Start service: docker run -v <host-world-dir>:${APP_DIR}/world \\ \n" \
+  "                             -d <image_name> ${INSTALL_DIR}/bin/run_java_app.sh \n" \
+  "   Stop service:  docker exec ${INSTALL_DIR}/bin/stop_java_app.sh \n" \
+  "   Send command:  docker exec ${INSTALL_DIR}/bin/app_cmd.sh  \\ \n" \
+  "                              '<cmd1> <param1-1> <param1-2> ..' \\ \n" \
+  "                              '<cmd2> <param2-1> <param2-2> ..'   \n" \
+  "                  Every app command and its parameters must be single or double quoted. \n" \
+'**************************************************' > /image_info.txt
+
+VOLUME ["${SERVER_DIR}", "${SERVER_DIR}/logs"]
+
+EXPOSE 25565 25575
+
+CMD ["/bin/cat", "/image_info.txt"]
